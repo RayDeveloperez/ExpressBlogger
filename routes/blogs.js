@@ -41,65 +41,13 @@ const sampleBlogs = [
   },
 ];
 
-//instantiate standard libraries
-const createError = require('http-errors');
 const express = require('express');
-const path = require('path');
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
-
-//setup router for each set of routes 
-// importing from routes/ folder 
-const indexRouter = require('./routes/index');
-const usersRouter = require('./routes/users');
-const blogsRouter = require('./routes/blogs');
-const router = require('./routes/index');
-
-//instantiate the actual express app
-const app = express();
-
-// view engine setup
-// sets application settings. (things we can access across the application)
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
-
-//associating the libraries with the app
-// adding middleware 
-//(adding libraries that we can use throughout our application)
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-
-//for hosting static files: css, html, images etc. 
-app.use(express.static(path.join(__dirname, 'public'))); 
-
-//we bind (associate) the routers to routes in our application
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-app.use('/blogs', blogsRouter);
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+const router = express.Router();
+var { validateUserData } = require("../Validation/blogs");
+/* GET users listing. */
+router.get('/', function(req, res, next) {
+  res.json({sucess: true, route: "blogs", message:"welcome to the blogs page"});
 });
-
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-
-// app.listen(port, () => {
-//   console.log(`ExpressBlogger app listening on port ${port}`)
-// })
-
-module.exports = app;
 
 router.get("/all", (req, res,next)=>{
   res.json({
@@ -117,17 +65,86 @@ router.get("/single/:title", (req, res)=>{
   })
 })
 
-  router.delete("/delete/:title", (req, res)=>{
+router.delete("/delete/:title", (req, res)=>{
 
-    const blogNameToDelete = req.params.title
-  
-    const indexOfBlog = sampleBlogs.findIndex((blog)=>{
-      return blog.title === blogNameToDelete
-    })
-  
-    sampleBlogs.splice(indexOfBlog, 1)
-  
-    res.json({
-      success: true
-    })
-  })
+	const blogNameToDelete = req.params.title
+
+	const indexOfBlog = sampleBlogs.findIndex((blog)=>{
+		return blog.title === blogNameToDelete
+	})
+
+	sampleBlogs.splice(indexOfBlog, 1)
+
+	res.json({
+		success: true
+	})
+})
+
+router.post("/create-blog", (req, res)=>{
+
+
+  const newBlog = {
+      title : req.body.title,
+      text :req.body.text,
+      author : req.body.author,
+      category : req.body.category,
+      createdAt : new Date(),
+      lastModified : new Date(),
+  }
+  sampleBlogs.push(newBlog)
+
+res.json({
+  success: true,
+  allBlogs: newBlog
+})
+})
+
+router.put('/updated-blog/:title',(req, res)=>{
+
+  const blogNameToFind = req.params.title
+
+  const originalBlog = sampleBlogs.find((blog)=>{
+  return blog.title === blogNameToFind
+})
+const originalBlogIndex = sampleBlogs.findIndex((blog)=>{
+  return blog.title === blogNameToFind
+})
+
+  const updatedBlog = {}
+
+//   if (req.body.title !== undefined){
+//   updatedBlog.title = req.body.title
+// } else {
+//   updatedBlog.title = originalBlog.title
+// }
+
+// if (req.body.text!== undefined){
+//   updatedBlog.text= req.body.text
+// } else {
+//   updatedBlog.text= originalBlog.text
+// }
+
+// if (req.body.author !== undefined){
+//   updatedBlog.author = req.body.author
+// } else {
+//   updatedBlog.author = originalBlog.author
+// }
+
+// if (req.body.category !== undefined){
+//   updatedBlog.category = req.body.category
+// } else {
+//   updatedBlog.category = originalBlog.category
+// }
+
+  updatedBlog.createdAt = new Date()
+  updatedBlog.lastModified = new Date()
+
+  sampleBlogs[originalBlogIndex] = updatedBlog
+  res.json({
+  success: true
+})
+})
+
+
+
+module.exports = router;
